@@ -18,7 +18,6 @@ td,th {
 }
 
 table {
-  margin: 1em 0;
   width: 100%;
 }
 
@@ -40,19 +39,26 @@ button[type="submit"] {
   display: grid;
   grid-template-columns: 50% 50%;
   grid-template-areas: 
-    "table chart"
-    "table development";
+    "temp development"
+    "table chart";
 }
 
 @media(max-width: 768px) {
   .grid {
     display: block;
   }
+
+  .grid > * {
+    margin: 1em 0;
+  }
 }
 
 .development {
   grid-area: development;
-  padding: 1em;
+}
+
+.development h2 {
+  margin-top: 0;
 }
 
 .table {
@@ -63,4 +69,8 @@ button[type="submit"] {
 
 .chart {
   grid-area: chart;
+}
+
+.set-temp {
+  grid-area: temp;
 }

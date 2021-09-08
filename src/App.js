@@ -52,28 +52,31 @@ function App() {
         </button>
         : <div>
           <h2>{timerEnd ? `End Time: ${secondsToTimer(timerEnd - timerStart)}` : `Current Time: ${currentTime}`}</h2>
-          {!timerEnd &&
-                <form onSubmit={(e) => {
+          <div class="grid">
+            {!timerEnd &&
+              <form
+                className="set-temp"
+                onSubmit={(e) => {
                   e.preventDefault();
                   addRow({
                     time: rows.length * 30 + 30,
                     temp: inputRef.current.value,
                   })
+                  inputRef.current.value = ""
                 }
                 }>
-                  <div>
-                    <label for="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label><input id="temp" ref={inputRef} name="temp" pattern="^[0-9]+$" required />
-                  </div>
-                  <button type="submit">Submit</button>
-                </form>
-              }
-          <div class="grid">
+                <div>
+                  <label for="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label><input id="temp" ref={inputRef} name="temp" pattern="^[0-9]+$" required />
+                </div>
+                <button type="submit">Submit</button>
+              </form>
+            }
             <svg viewBox={`0 0 ${boxWidth} ${boxHeight}`} class="chart">
               <polyline
                 fill="none"
                 stroke="red"
                 stroke-width="3"
-                points={'\n' + rows.map(({ temp, time }) => `${boxWidth / 15 * (time / 60)},${boxHeight - temp * tempRatio + tempFloor}`).join('\n')}
+                points={'\n' + rows.map(({ temp, time }) => `${boxWidth / 15 * (time / 60)},${temp * tempRatio * -1 + tempFloor * tempRatio + boxHeight}`).join('\n')}
               />
               <polyline
                 fill="none"
@@ -81,7 +84,7 @@ function App() {
                 stroke-width="3"
                 points={'\n' + rows.map(({ temp, time }, index) => {
                   const range = index === 0 ? 0 : temp - rows[index - 1].temp
-                  return `${boxWidth / 15 * (time / 60)},${boxHeight - range * riseRatio + riseFloor}`
+                  return `${boxWidth / 15 * (time / 60)},${range * riseRatio * -1 + riseFloor * riseRatio + boxHeight}`
                 }).join('\n')}
               />
               {new Array(tempCount).fill(0).map((_, index) => <text x="5" y={boxHeight - index * ((boxHeight + boxHeight / tempCount - 5) / tempCount)} font-size="8">{Math.round(index * (tempRange / (tempCount - 1))) + tempFloor}F</text>)}
