@@ -102,7 +102,7 @@ function App() {
                 </thead>
                 <tbody>
                   {rows.map(({ time, temp, editTemp }, index) => <tr>
-                    <td>{time}</td>
+                    <td>{secondsToTimer(time)}</td>
                     <td
                       onMouseEnter={() => updateRow(index, 'editTemp', true)}
                       onMouseLeave={() => updateRow(index, 'editTemp', false)}>
