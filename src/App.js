@@ -99,7 +99,7 @@ function App() {
         </form>
           <hr />
           <label>Upload CSV</label>
-          <input type="file" onChange={async (e) => {
+          <input type="file" class="btn" onChange={async (e) => {
             const base64 = await getBase64(e.target.files[0]);
             const csv = atob(base64.split('data:text/csv;base64,')[1])
             const [headings, ...rows] = csv.split('\n').map(val => val.split(','));

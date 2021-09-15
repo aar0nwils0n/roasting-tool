@@ -90,7 +90,7 @@ body {
   box-sizing: content-box;
 }
 
-.btn {
+button.btn, .btn::file-selector-button {
   color: white;
   background-color: rgb(190, 0, 0);
   text-shadow: 0.025em 0.025em black;
@@ -108,7 +108,15 @@ body {
   transition: 200ms all;
 }
 
+hr {
+  border: 0;
+  border-bottom: 2px solid black;
+  margin: 2em 0;
+}
 
+.btn::file-selector-button {
+  margin-right: 10px;
+}
 
 .input-wrapper input {
   display: block;
