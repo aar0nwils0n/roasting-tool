@@ -150,21 +150,6 @@ function App() {
               </div>
             }
             <svg viewBox={`0 0 ${boxWidth} ${boxHeight}`} className="chart">
-              <polyline
-                fill="none"
-                stroke="red"
-                stroke-width="3"
-                points={'\n' + rows.map(({ temp, time }) => `${boxWidth / 15 * (time / 60)},${temp * tempRatio * -1 + tempFloor * tempRatio + boxHeight}`).join('\n')}
-              />
-              <polyline
-                fill="none"
-                stroke="blue"
-                stroke-width="3"
-                points={'\n' + rows.map(({ temp, time }, index) => {
-                  const range = index === 0 ? 0 : temp - rows[index - 1].temp
-                  return `${boxWidth / 15 * (time / 60)},${range * riseRatio * -1 + riseFloor * riseRatio + boxHeight}`
-                }).join('\n')}
-              />
 
               {new Array(14).fill().map((_, index) =>
                 <polyline
@@ -185,6 +170,22 @@ function App() {
                 />)}
 
 
+              <polyline
+                fill="none"
+                stroke="red"
+                stroke-width="3"
+                points={'\n' + rows.map(({ temp, time }) => `${boxWidth / 15 * (time / 60)},${temp * tempRatio * -1 + tempFloor * tempRatio + boxHeight}`).join('\n')}
+              />
+              <polyline
+                fill="none"
+                stroke="blue"
+                stroke-width="3"
+                points={'\n' + rows.map(({ temp, time }, index) => {
+                  const range = index === 0 ? 0 : temp - rows[index - 1].temp
+                  return `${boxWidth / 15 * (time / 60)},${range * riseRatio * -1 + riseFloor * riseRatio + boxHeight}`
+                }).join('\n')}
+              />
+
               {new Array(tempCount).fill(0).map((_, index) => <text x="5" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (tempRange / (tempCount - 1))) + tempFloor}F</text>)}
               {new Array(tempCount).fill(0).map((_, index) => <text x="480" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (riseRange / (tempCount - 1)))}</text>)}
               {new Array(14).fill().map((_, index) => <text x={boxWidth / 15 * (index + 1)} y="300" font-size="8">{index + 1}</text>)}
@@ -193,7 +194,7 @@ function App() {
               <table>
                 <thead>
                   <tr>
-                    {headings.map(heading => <td>{heading}</td>)}
+                    {headings.map(heading => <th>{heading}</th>)}
                   </tr>
                 </thead>
                 <tbody>
