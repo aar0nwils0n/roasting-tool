@@ -47,11 +47,11 @@ function App() {
   return (
     <div className="App">
       {!timerStart ?
-        <button type="button" onClick={() => setTimerStart(Date.now() / 1000)}>
+        <button class="btn" type="button" onClick={() => setTimerStart(Date.now() / 1000)}>
           Start Roast
         </button>
         : <div>
-          <h2>{timerEnd ? `End Time: ${secondsToTimer(timerEnd - timerStart)}` : `Current Time: ${currentTime}`}</h2>
+          <h1>{timerEnd ? `End Time: ${secondsToTimer(timerEnd - timerStart)}` : `Current Time: ${currentTime}`}</h1>
           <div class="grid">
             {!timerEnd &&
               <form
@@ -65,10 +65,12 @@ function App() {
                   inputRef.current.value = ""
                 }
                 }>
-                <div>
-                  <label for="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label><input id="temp" ref={inputRef} name="temp" pattern="^[0-9]+$" required />
+                <h2>Temperature</h2>
+                <div class="input-wrapper">
+                  <input placeholder=" " id="temp" ref={inputRef} name="temp" pattern="^[0-9]+$" required />
+                  <label for="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label>
                 </div>
-                <button type="submit">Submit</button>
+                <button class="btn" type="submit">Submit</button>
               </form>
             }
             <svg viewBox={`0 0 ${boxWidth} ${boxHeight}`} class="chart">
@@ -87,8 +89,28 @@ function App() {
                   return `${boxWidth / 15 * (time / 60)},${range * riseRatio * -1 + riseFloor * riseRatio + boxHeight}`
                 }).join('\n')}
               />
-              {new Array(tempCount).fill(0).map((_, index) => <text x="5" y={boxHeight - index * ((boxHeight + boxHeight / tempCount - 5) / tempCount)} font-size="8">{Math.round(index * (tempRange / (tempCount - 1))) + tempFloor}F</text>)}
-              {new Array(tempCount).fill(0).map((_, index) => <text x="480" y={boxHeight - index * ((boxHeight + boxHeight / tempCount - 5) / tempCount)} font-size="8">{Math.round(index * (riseRange / (tempCount - 1)))}</text>)}
+
+              {new Array(14).fill().map((_, index) =>
+                <polyline
+                  fill="none"
+                  stroke="#eee"
+                  stroke-width="1"
+                  points={`${boxWidth / 15 * (index + 1) + 1},0
+                ${boxWidth / 15 * (index + 1) + 1},${boxHeight}`}
+                />)}
+
+              {new Array(14).fill().map((_, index) =>
+                <polyline
+                  fill="none"
+                  stroke="#eee"
+                  stroke-width="1"
+                  points={`0,${boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount)}
+                  ${boxWidth},${boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount)}`}
+                />)}
+
+
+              {new Array(tempCount).fill(0).map((_, index) => <text x="5" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (tempRange / (tempCount - 1))) + tempFloor}F</text>)}
+            {new Array(tempCount).fill(0).map((_, index) => <text x="480" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (riseRange / (tempCount - 1)))}</text>)}
               {new Array(14).fill().map((_, index) => <text x={boxWidth / 15 * (index + 1)} y="300" font-size="8">{index + 1}</text>)}
             </svg>
             <div class="table">
@@ -119,12 +141,22 @@ function App() {
             <div class="development">
               <h2>Development</h2>
               {!firstCrack ?
-                <button type="button" onClick={() => setFirstCrack(Date.now() / 1000 - timerStart)}>Set first crack at {currentTime}</button>
-                : <div>
-                  First Crack: {secondsToTimer(firstCrack)}<br />
-                  Development Percent: {Math.round((((timerEnd || Date.now() / 1000) - timerStart - firstCrack) / firstCrack) * 100)}%<br />
-                  {!timerEnd && <button type="button" onClick={() => setTimerEnd(Date.now() / 1000)}>STOP</button>}
-                </div>}
+                <button class="btn" type="button" onClick={() => setFirstCrack(Date.now() / 1000 - timerStart)}>Set first crack at {currentTime}</button>
+                : <table>
+                  <thead>
+                    <tr>
+                      <th>First Crack</th>
+                      <th>Development Percent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{secondsToTimer(firstCrack)}</td>
+                      <td>{Math.round((((timerEnd || Date.now() / 1000) - timerStart - firstCrack) / firstCrack) * 100)}%</td>
+                    </tr>
+                  </tbody>
+                  {!timerEnd && <button class="btn" type="button" onClick={() => setTimerEnd(Date.now() / 1000)}>STOP</button>}
+                </table>}
             </div>
           </div>
         </div>}
