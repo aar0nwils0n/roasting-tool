@@ -7,6 +7,20 @@ const secondsToTimer = (timer) => {
   return `${Math.round(minutes).toString().padStart(2, "0")}:${Math.round(seconds).toString().padStart(2, "0")}`;
 }
 
+const timerToSeconds = timer => {
+  const [minutes, seconds] = timer.split(':').map(Number);
+  return minutes * 60 + seconds
+}
+
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
 const boxHeight = 300
 const boxWidth = 500
 
@@ -20,9 +34,11 @@ const riseFloor = 0
 const riseCeil = 25
 const riseRange = riseCeil - riseFloor
 const riseRatio = boxHeight / riseRange
+const headings = ['Time', 'Temperature', 'Rate of Rise']
 
 function App() {
-  const [timerStart, setTimerStart] = useState(false);
+  const [timerStart, setTimerStart] = useState();
+  const [title, setTitle] = useState();
   const [timer, setTimer] = useState(false);
   const [rows, setRows] = useState([])
   const [firstCrack, setFirstCrack] = useState()
@@ -36,6 +52,24 @@ function App() {
     setRows([...rows])
   }
 
+  const developmentPercent = `${Math.round((((timerEnd || Date.now() / 1000) - timerStart - firstCrack) / firstCrack) * 100)}%`;
+
+  function exportCsv() {
+    const headingRow = headings.concat(['Meta', 'Value']).join(',');
+    const firstCrackRow = ['', '', '', 'First Crack', secondsToTimer(firstCrack)]
+    const endTimeRow = ['', '', '', 'End Time', secondsToTimer(timerEnd - timerStart)]
+    const developmentRow = ['', '', '', 'Development', developmentPercent]
+    const rowsStr = rows.map(({ time, temp }, index) => [secondsToTimer(time), temp, index === 0 ? '-' : temp - rows[index - 1].temp, '', ''].join(',')).join('\n')
+    const allRows = [headingRow, firstCrackRow, endTimeRow, developmentRow, rowsStr].join('\n')
+    const link = document.createElement("a");
+    const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(allRows)
+    link.setAttribute("href", csvContent);
+    link.setAttribute("download", `${title}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove()
+  }
+
   useEffect(() => {
     if (!timerStart || timerEnd) return;
     setInterval(() => {
@@ -43,37 +77,79 @@ function App() {
     }, 1000);
   }, [timerStart, timerEnd])
   const currentTime = secondsToTimer(timer)
-  const inputRef = createRef()
+  const timeRef = createRef()
+  const titleRef = createRef()
+
   return (
     <div className="App">
-      {!timerStart ?
-        <button class="btn" type="button" onClick={() => setTimerStart(Date.now() / 1000)}>
-          Start Roast
-        </button>
+      {typeof timerStart === 'undefined' ?
+        <><form onSubmit={(e) => {
+          e.preventDefault();
+          setTitle(titleRef.current.value)
+          setTimerStart(Date.now() / 1000)
+        }
+        }>
+          <div className="input-wrapper">
+            <input placeholder=" " name="title" ref={titleRef} />
+            <label>Roast Title</label>
+          </div>
+          <button className="btn" type="submit">
+            Start Roast
+          </button>
+        </form>
+          <hr />
+          <label>Upload CSV</label>
+          <input type="file" onChange={async (e) => {
+            const base64 = await getBase64(e.target.files[0]);
+            const csv = atob(base64.split('data:text/csv;base64,')[1])
+            const [headings, ...rows] = csv.split('\n').map(val => val.split(','));
+            const data = rows.map(cols => {
+              const pairs = cols.map((val, index) => ([
+                headings[index], val
+              ]))
+              return Object.fromEntries(pairs);
+            });
+
+            const meta = data.filter(({ Meta }) => Meta)
+            const tempRows = data.filter(({ Meta }) => !Meta)
+
+            setRows(tempRows.map(({ Temperature, Time }) => ({
+              time: timerToSeconds(Time),
+              temp: Temperature
+            })))
+            setTimerEnd(timerToSeconds(meta.find(({ Meta }) => Meta === 'End Time')?.Value))
+            setFirstCrack(timerToSeconds(meta.find(({ Meta }) => Meta === 'First Crack')?.Value))
+            setTimerStart(0)
+
+          }} />
+        </>
         : <div>
           <h1>{timerEnd ? `End Time: ${secondsToTimer(timerEnd - timerStart)}` : `Current Time: ${currentTime}`}</h1>
-          <div class="grid">
-            {!timerEnd &&
+          <div className="grid">
+            {!timerEnd ?
               <form
                 className="set-temp"
                 onSubmit={(e) => {
                   e.preventDefault();
                   addRow({
                     time: rows.length * 30 + 30,
-                    temp: inputRef.current.value,
+                    temp: timeRef.current.value,
                   })
-                  inputRef.current.value = ""
+                  timeRef.current.value = ""
                 }
                 }>
                 <h2>Temperature</h2>
-                <div class="input-wrapper">
-                  <input placeholder=" " id="temp" ref={inputRef} name="temp" pattern="^[0-9]+$" required />
-                  <label for="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label>
+                <div className="input-wrapper">
+                  <input placeholder=" " id="temp" ref={timeRef} name="temp" pattern="^[0-9]+$" required />
+                  <label htmlFor="temp">Set Temperature at {secondsToTimer(rows.length * 30 + 30)}</label>
                 </div>
-                <button class="btn" type="submit">Submit</button>
+                <button className="btn" type="submit">Submit</button>
               </form>
+              : <div>
+                {typeof title !== 'undefined' && <button className="btn" type="submit" onClick={() => exportCsv()}>Export CSV</button>}
+              </div>
             }
-            <svg viewBox={`0 0 ${boxWidth} ${boxHeight}`} class="chart">
+            <svg viewBox={`0 0 ${boxWidth} ${boxHeight}`} className="chart">
               <polyline
                 fill="none"
                 stroke="red"
@@ -110,16 +186,14 @@ function App() {
 
 
               {new Array(tempCount).fill(0).map((_, index) => <text x="5" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (tempRange / (tempCount - 1))) + tempFloor}F</text>)}
-            {new Array(tempCount).fill(0).map((_, index) => <text x="480" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (riseRange / (tempCount - 1)))}</text>)}
+              {new Array(tempCount).fill(0).map((_, index) => <text x="480" y={boxHeight - index * ((boxHeight + boxHeight / tempCount) / tempCount) + 2.5} font-size="8">{Math.round(index * (riseRange / (tempCount - 1)))}</text>)}
               {new Array(14).fill().map((_, index) => <text x={boxWidth / 15 * (index + 1)} y="300" font-size="8">{index + 1}</text>)}
             </svg>
-            <div class="table">
+            <div className="table">
               <table>
                 <thead>
                   <tr>
-                    <th>Time</th>
-                    <th>Temperature</th>
-                    <th>Rate of Rise</th>
+                    {headings.map(heading => <td>{heading}</td>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -138,10 +212,10 @@ function App() {
                 </tbody>
               </table>
             </div>
-            <div class="development">
+            <div className="development">
               <h2>Development</h2>
               {!firstCrack ?
-                <button class="btn" type="button" onClick={() => setFirstCrack(Date.now() / 1000 - timerStart)}>Set first crack at {currentTime}</button>
+                <button className="btn" type="button" onClick={() => setFirstCrack(Date.now() / 1000 - timerStart)}>Set first crack at {currentTime}</button>
                 : <table>
                   <thead>
                     <tr>
@@ -152,10 +226,10 @@ function App() {
                   <tbody>
                     <tr>
                       <td>{secondsToTimer(firstCrack)}</td>
-                      <td>{Math.round((((timerEnd || Date.now() / 1000) - timerStart - firstCrack) / firstCrack) * 100)}%</td>
+                      <td>{developmentPercent}</td>
                     </tr>
                   </tbody>
-                  {!timerEnd && <button class="btn" type="button" onClick={() => setTimerEnd(Date.now() / 1000)}>STOP</button>}
+                  {!timerEnd && <button className="btn" type="button" onClick={() => setTimerEnd(Date.now() / 1000)}>STOP</button>}
                 </table>}
             </div>
           </div>
